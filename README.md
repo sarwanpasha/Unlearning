@@ -104,10 +104,18 @@ for m in ("dfu", "ga"):
 PY
 ```
 
-Both methods reach the same suppression of about 1 nat; DFU leaves a smaller
-share of it to the benign and probe adversaries, at a lower curvature along
-its update. The first call also fine-tunes the TOFU model, which is cached
-under `results/` and reused by the second.
+On one NVIDIA GH200 (PyTorch 2.7.1) this prints
+
+```
+dfu  suppression=1.00 utility_cost=0.287 curvature=0.333 recovered_benign=12.9% recovered_probe=26.7%
+ga   suppression=1.08 utility_cost=0.269 curvature=0.189 recovered_benign=19.2% recovered_probe=47.3%
+```
+
+Both methods reach a suppression of about 1 nat at a similar utility cost, and
+DFU leaves a smaller share of it to both adversaries. Exact values depend on
+the hardware and library versions through the fine-tuned checkpoint. The first
+call also fine-tunes the TOFU model (about 5 minutes), which is cached under
+`results/` and reused by the second.
 
 ### Main options
 
