@@ -138,7 +138,18 @@ sbatch --job-name=unlearning_tofu --array=0-49 --gres=gpu:1 \
 python cluster/aggregate.py results agg.json runs.csv
 ```
 
-Add the partition and account options your cluster requires. `aggregate.py`
+Add the partition and account options your cluster requires. On a node with a
+single large GPU, `cluster/run_packed.sbatch` runs several configurations at
+once, for example lines 1 to 14 of a config file with 7 concurrent runs:
+
+```bash
+sbatch --job-name=unlearning_wmdp cluster/run_packed.sbatch \
+       cluster/configs/wmdp.txt results/wmdp 1 14 7
+```
+
+Run one configuration per seed first (for example the `--method none` lines),
+so that the fine-tuned checkpoints are cached before concurrent runs read them.
+ `aggregate.py`
 writes per-(arm, method) means and standard deviations, and a per-run CSV.
 
 ## Figures
