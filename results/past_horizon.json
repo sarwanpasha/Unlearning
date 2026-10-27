@@ -1,0 +1,9 @@
+{
+  "instances": 500,
+  "identity_max_abs_err": 5.551115123125783e-16,
+  "bound_violations": 0,
+  "median_opt_margin_at_60": 0.873495726802044,
+  "median_grad_margin_at_60": 0.09340729611495077,
+  "frac_opt_beats_grad_at_60": 1.0,
+  "median_hbar_over_hmax": 0.006415120968053693
+}

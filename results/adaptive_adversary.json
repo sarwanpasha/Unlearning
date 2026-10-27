@@ -1,0 +1,38 @@
+{
+  "instances": 60,
+  "k": 8,
+  "rows": [
+    {
+      "C": 1.0,
+      "margin_naive_median": 1.0,
+      "margin_naive_worst": 0.9999999999999997,
+      "margin_robust_median": 1.0,
+      "cost_ratio_median": 1.0,
+      "search_gap_max": 0.0
+    },
+    {
+      "C": 2.0,
+      "margin_naive_median": 0.8757420293596405,
+      "margin_naive_worst": 0.4714560039752744,
+      "margin_robust_median": 1.0,
+      "cost_ratio_median": 1.2912016479332524,
+      "search_gap_max": 0.0
+    },
+    {
+      "C": 5.0,
+      "margin_naive_median": 0.5559838666235473,
+      "margin_naive_worst": 0.19283892916656603,
+      "margin_robust_median": 1.0,
+      "cost_ratio_median": 2.8902337829948843,
+      "search_gap_max": 0.0
+    },
+    {
+      "C": 10.0,
+      "margin_naive_median": 0.28310334069169507,
+      "margin_naive_worst": 0.004546448541502442,
+      "margin_robust_median": 1.0,
+      "cost_ratio_median": 9.556415029960172,
+      "search_gap_max": 0.0
+    }
+  ]
+}

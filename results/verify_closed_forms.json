@@ -1,0 +1,17 @@
+{
+  "stationary_max_rel_err": 1.6271908182670326e-14,
+  "stationary_margin_max_err": 2.220446049250313e-16,
+  "stationary_margin_all_positive": true,
+  "nonstationary_max_rel_err": 1.1534976515281353e-12,
+  "nonstationary_inactive": 35,
+  "precond_max_rel_err": 6.746531733089907e-15,
+  "precond_forward_misses": 77,
+  "precond_forward_margin_median": 0.9828681939557382,
+  "precond_forward_margin_worst": 0.10143254445054632,
+  "nonconvex_cases": 240,
+  "nonconvex_skipped_infeasible": 0,
+  "nonconvex_bound_holds": true,
+  "nonconvex_min_ratio": 1.0207284348376315,
+  "nonconvex_median_ratio": 1.5433717597442895,
+  "nonconvex_max_ratio": 11.414379849423732
+}
