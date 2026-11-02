@@ -14,7 +14,7 @@ METHODS = ["--method ga", "--method gagd", "--method npo", "--method npo_sam",
            "--method none"]            # 'none' runs the attacks from the never-unlearned model
 ARMS = {"tofu": ("--bench tofu --metrics --strong", 5),
         "muse": ("--bench muse --metrics", 5),
-        "wmdp": ("--bench wmdp --metrics --strong", 3),
+        "wmdp": ("--bench wmdp --metrics", 3),
         "tofu_fulladv": ("--bench tofu --adv_full", 3)}
 for arm, (flags, seeds) in ARMS.items():
     lines = [f"{flags} {m} --seed {s}" for s in range(seeds) for m in METHODS]
