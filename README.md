@@ -58,7 +58,7 @@ prints a summary.
 
 | Script | What it checks | Runtime |
 |---|---|---|
-| `theory/verify_closed_forms.py` | Theorem 1, Corollaries 1 and 2 (adjoint vs forward propagation), and the nonconvex lower bound of Theorem 2, each against an SQP solve that never sees the closed form | ~1 min |
+| `theory/verify_closed_forms.py` | The closed-form price, its non-stationary and preconditioned (adjoint vs forward propagation) extensions, and the nonconvex lower bound, each against an SQP solve that never sees the closed form | ~1 min |
 | `theory/certified_removal.py` | Ridge regression with exact removal and Gaussian output perturbation at $\varepsilon \in \{1,2,5,10\}$: global, retain and per-record sensitivity, and the relearning horizon of four designs with the same certificate | ~3 min |
 | `theory/adaptive_adversary.py` | A recipient that picks its diagonal preconditioner to erase the margin, and the robust design | seconds |
 | `theory/past_horizon.py` | The margin of the optimal update after its design horizon | seconds |
@@ -166,7 +166,7 @@ writes per-(arm, method) means and standard deviations, and a per-run CSV.
 python figures/figures.py               # writes Figures/*.pdf
 ```
 
-The language-model panels read the first study's per-run measurements in
+The language-model panels read the per-run TOFU measurements in
 `results/first_study_runs.csv` and `results/first_study_extra.csv`.
 
 ## Repository layout
@@ -176,5 +176,5 @@ theory/    closed forms (theory.py) and synthetic experiments
 llm/       language-model pipeline (llm_common.py, run_llm.py)
 cluster/   Slurm array script, config generator, aggregation
 figures/   figure script
-results/   first-study measurements; outputs of the scripts land here
+results/   TOFU per-run measurements; outputs of the scripts land here
 ```
