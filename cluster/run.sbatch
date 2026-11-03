@@ -16,7 +16,7 @@ CF=$1; OD=$2; shift 2
 cd "$ROOT"
 export P="$ROOT"            # checkpoints are cached under $P/results/
 LINE=$(sed -n "$((SLURM_ARRAY_TASK_ID+1))p" "$CF")
-TAG=$(echo "$LINE" | sed 's/--//g; s/ /_/g')
+TAG=$(echo "$LINE" | sed 's|--||g; s|[ /,]|_|g')
 mkdir -p "$OD"
 if [ -s "$OD/$TAG.json" ]; then echo "exists $TAG"; exit 0; fi
 echo "CONFIG $LINE $*"
