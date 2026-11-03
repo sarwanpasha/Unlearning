@@ -108,6 +108,12 @@ p.add_argument("--cir_grad_pcs", type=int, default=36)
 p.add_argument("--cir_retain_w", type=float, default=1.0)
 p.add_argument("--wmdp_n", type=int, default=200, help="WMDP-Cyber questions to unlearn")
 p.add_argument("--rtt_frac", type=float, default=0.5, help="share of the forget set held out from the RTT attacker")
+p.add_argument("--gen_every", type=int, default=0,
+               help="TOFU: greedy generations on the deleted questions every this many passes of each attack (0 = off)")
+p.add_argument("--lr_grid", default="",
+               help="comma-separated learning rates; reruns the benign and probe attacks at each one")
+p.add_argument("--oracle_C", type=float, default=0.0,
+               help="oracle adversary that knows the update v and takes C times larger steps on its top-10%% coordinates")
 p.add_argument("--out", required=True)
 A = p.parse_args()
 
@@ -751,7 +757,8 @@ fe1 = nll(m, Xev, Yev, A.bs, pad)
 R["eval_nll_trained"], R["eval_nll_unlearned"] = fe0, fe1
 
 
-def relearn(X, Y, tag, seed0, full=False, lr=None, steps=None, every=1, after=None, start=None):
+def relearn(X, Y, tag, seed0, full=False, lr=None, steps=None, every=1, after=None, start=None,
+            gen=False, pscale=None):
     """Fine-tune from the unlearned model and watch the deleted readout.
 
     With full=True the adversary optimises every parameter of the released
@@ -776,12 +783,23 @@ def relearn(X, Y, tag, seed0, full=False, lr=None, steps=None, every=1, after=No
            else torch.optim.AdamW(params, lr=lr, weight_decay=0.0))
     thr_e = fe1 - A.thr_frac * (fe1 - fe0)
     curve, own, k = [], [], None
+    gcurve = []
+    if gen:
+        gcurve.append(gen_eval(0))
     for s in range(steps):
         for b in batches(X, Y, A.bs, pad, True, seed0 + s):
             opt.zero_grad(set_to_none=True)
             loss_on(m, b).backward()
             torch.nn.utils.clip_grad_norm_(params, 1.0)
+            if pscale is not None:
+                prev = [q.detach().clone() for q in ps]
             opt.step()
+            if pscale is not None:
+                with torch.no_grad():
+                    for q, q0, sc_ in zip(ps, prev, pscale):
+                        q.copy_(q0 + sc_ * (q - q0))
+        if gen and ((s + 1) % A.gen_every == 0 or s == steps - 1):
+            gcurve.append(gen_eval(s + 1))
         if (s + 1) % every == 0 or s == steps - 1:
             v = nll(m, Xev, Yev, A.bs, pad)
             curve.append(v)
@@ -789,6 +807,8 @@ def relearn(X, Y, tag, seed0, full=False, lr=None, steps=None, every=1, after=No
             if k is None and v <= thr_e:
                 k = s + 1
     R[f"relearn_curve_{tag}"] = curve
+    if gen:
+        R[f"gen_curve_{tag}"] = gcurve
     R[f"adv_own_loss_{tag}"] = own
     R[f"k_recover_{tag}"] = k if k is not None else steps
     R[f"resisted_{tag}"] = k is None
@@ -987,6 +1007,26 @@ if A.metrics:
     R.update(MET)
 
 
+def gen_eval(step):
+    """Generation-level readout that DFU does not optimise: greedy answers to
+    every deleted question and to its paraphrase, scored by ROUGE-L recall per
+    question. Questions the probe adversary trains on are the first n_probe."""
+    set_q = list(fg["question"])
+    refs = list(fg["answer"])
+    r_q = rouge_each(generate(set_q), refs)
+    out = dict(step=step, rouge=r_q)
+    if A.metrics and "paraphrased_question" in fgp.column_names:
+        out["rouge_para"] = rouge_each(generate(list(fgp["paraphrased_question"])),
+                                       list(fgp["answer"]))
+    return out
+
+
+def rouge_each(gens, refs):
+    from rouge_score import rouge_scorer
+    sc = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
+    return [float(sc.score(r, g)["rougeL"].recall) for g, r in zip(gens, refs)]
+
+
 def after_attack(tag):
     if not A.metrics:
         return
@@ -997,13 +1037,39 @@ def after_attack(tag):
         R[f"wmdp_acc_V_after_{tag}"] = mcq_acc(wsel[:R["n_rtt_eval"]])
 
 
-relearn(Xa, Ya, "benign", 300, full=A.adv_full, after=after_attack)
-relearn(Xp, Yp, "probe", 700, full=A.adv_full, after=after_attack)
+GEN = A.gen_every > 0 and A.bench == "tofu"
+if GEN:
+    set_lora(theta1)
+    R["gen_unlearned"] = gen_eval(0)
+    set_lora(theta0)
+    R["gen_trained"] = gen_eval(0)
+    if theta_ret is not None:
+        set_lora(theta_ret)
+        R["gen_retain_only"] = gen_eval(0)
+relearn(Xa, Ya, "benign", 300, full=A.adv_full, after=after_attack, gen=GEN)
+relearn(Xp, Yp, "probe", 700, full=A.adv_full, after=after_attack, gen=GEN)
 if A.strong:
     relearn(Xa, Ya, "benign_strong", 1300, full=A.adv_full, lr=A.strong_lr,
             steps=A.strong_steps, every=A.strong_every, after=after_attack)
     relearn(Xp, Yp, "probe_strong", 1700, full=A.adv_full, lr=A.strong_lr,
-            steps=A.strong_steps, every=A.strong_every, after=after_attack)
+            steps=A.strong_steps, every=A.strong_every, after=after_attack, gen=GEN)
+if A.lr_grid:
+    # the adversary searches its learning rate; the aggregate takes the worst case
+    for lr_ in [float(x) for x in A.lr_grid.split(",")]:
+        relearn(Xa, Ya, f"benign_lr{lr_:g}", 300, full=A.adv_full, lr=lr_)
+        relearn(Xp, Yp, f"probe_lr{lr_:g}", 700, full=A.adv_full, lr=lr_)
+if A.oracle_C > 0:
+    # A recipient who knows the released update v (for example from an earlier
+    # release) takes C times larger steps on the coordinates v occupies most.
+    dv_ = [b_ - a_ for a_, b_ in zip(theta0, theta1)]
+    allv = flat(dv_).abs()
+    if float(allv.max()) > 0:
+        cut = float(torch.quantile(allv[torch.randperm(allv.numel(), device=allv.device)[:1000000]].float(), 0.9))
+        psc = [1.0 + (A.oracle_C - 1.0) * (t.abs() >= cut).float() for t in dv_]
+    else:
+        psc = [torch.ones_like(t) for t in dv_]
+    relearn(Xa, Ya, "benign_oracle", 300, full=False, pscale=psc)
+    relearn(Xp, Yp, "probe_oracle", 700, full=False, pscale=psc)
 if A.bench == "wmdp":
     # Fine-tuning on T also teaches the answer format, which lowers the readout
     # on V for any model. The same attack from the never-unlearned model is
