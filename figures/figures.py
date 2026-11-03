@@ -1,4 +1,4 @@
-"""Figures for the paper.  No titles or annotations inside the axes."""
+"""Figures from the result files.  No titles or annotations inside the axes."""
 import os
 import sys
 import numpy as np, pandas as pd, matplotlib
