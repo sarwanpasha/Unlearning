@@ -592,7 +592,7 @@ elif A.method == "tar":
     # differentiates through it; at our scale we use the first-order
     # approximation, taking the forget gradient at the post-adversary point and
     # applying it at the outer point, plus a retain term at the outer point.
-    # It is labelled TAR-FO in the paper for that reason.
+    # It is labelled TAR-FO (first-order) for that reason.
     AB = list(batches(Xr, Yr, A.bs, pad, True, 31))
     lr = A.un_lr
     for attempt in range(A.lr_tries):
