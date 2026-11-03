@@ -1,9 +1,9 @@
-# The Exact Price of Resistant Unlearning
+# Resistant Unlearning with a Relearning Horizon
 
-Code for the paper *The Exact Price of Resistant Unlearning*. A certified
+A certified
 unlearning guarantee constrains the distribution of the released parameters
 but says nothing about how quickly a downstream fine-tuner can bring the
-deleted content back. The paper adds a relearning horizon $k$ and a margin $D$
+deleted content back. This code adds a relearning horizon $k$ and a margin $D$
 to the definition of forgetting and derives the minimum utility cost of
 meeting them in a local quadratic model:
 
@@ -17,7 +17,7 @@ Hessian-vector products only.
 The repository has two parts.
 
 * `theory/`: the closed forms and every synthetic experiment. CPU only, runs in
-  minutes, and reproduces the numbers of the synthetic sections exactly.
+  minutes, and reproduces the synthetic results exactly.
 * `llm/`: the language-model experiments (TOFU, MUSE-News and WMDP-Cyber with
   Qwen2.5-0.5B-Instruct), with nine unlearning methods, relearning adversaries,
   forget metrics, leakage tests and plasticity. Needs one GPU.
